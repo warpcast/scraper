@@ -1,0 +1,11 @@
+{
+	"type": "module",
+	"dependencies": {
+		"ioredis": "^5.4.2",
+		"metascraper": "^5.45.28",
+		"metascraper-description": "^5.45.28",
+		"metascraper-image": "^5.45.28",
+		"metascraper-title": "^5.45.28",
+		"puppeteer": "^23.11.1"
+	}
+}
