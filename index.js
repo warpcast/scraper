@@ -28,11 +28,11 @@ const redis = new Cluster(
 			enableReadyCheck: true,
 			tls: TLS
 				? {
-						checkServerIdentity: () => {
-							// skip cert validation (needed for AWS ElastiCache)
-							return undefined;
-						},
-					}
+					checkServerIdentity: () => {
+						// skip cert validation (needed for AWS ElastiCache)
+						return undefined;
+					},
+				}
 				: undefined,
 		},
 		// Needed when running in AWS
@@ -101,12 +101,18 @@ redis.on("ready", async () => {
 					} catch (e) {
 						console.error("Unable to scrape URL", url, e);
 						job.success = false;
+						job.error = `${e}`;
 					}
 					try {
-						await redis.rpush(DONE_QUEUE, JSON.stringify(job));
+						const jobKey = `${DONE_QUEUE}:${job.id}`;
+						await redis
+							.pipeline()
+							.rpush(jobKey, JSON.stringify(job))
+							.expire(jobKey, 60 * 60) // 1 hour
+							.exec();
 					} catch (e) {
 						console.error(
-							`Unable to store job result for ID ${job.id}. Re-enqueueing job...`,
+							`Unable to store job result for ID ${job.id}: ${e}. Re-enqueueing job...`,
 						);
 						await redis.rpush(WAIT_QUEUE, rawJobStr);
 					}
